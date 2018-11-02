@@ -14,8 +14,9 @@ import (
 //生成模型文件
 func GenerateModels(){
 	//获取解析模板
-	t := getTemplateParser(config.Config.ModelTemplatePath)
+	tModel := getTemplateParser(config.Config.ModelTemplatePath)
 
+	tService := getTemplateParser(config.Config.ServiceTemplatePath)
 	for tableName,table := range db.Tables {
 
 		found := false
@@ -34,7 +35,14 @@ func GenerateModels(){
 
 		outputFileName = pathJoin(config.Config.ModelOutputPath, outputFileName) +".go"
 
-		file, err := os.Create(outputFileName)
+		fileModel, err := os.Create(outputFileName)
+		if err != nil {
+			panic(fmt.Errorf("fail to create file %s,caused by %s", outputFileName, err))
+		}
+
+		outputFileName = modelName + "Service"
+		outputFileName = pathJoin(config.Config.ServiceOutputPath, outputFileName) +".go"
+		fileService, err := os.Create(outputFileName)
 		if err != nil {
 			panic(fmt.Errorf("fail to create file %s,caused by %s", outputFileName, err))
 		}
@@ -44,9 +52,10 @@ func GenerateModels(){
 		model.PackageName = getPackageName(config.Config.ModelOutputPath)
 		model.ModelName = modelName
 		model.Table = table
-
+		model.ModelPackage = config.Config.ModelPackage
 		fmt.Printf("generate model for table %s, contents: %s\n", model.Table.Name, util.IndentJSON(model.Table))
-		t.Execute(file, model)
+		tModel.Execute(fileModel, model)
+		tService.Execute(fileService, model)
 	}
 }
 

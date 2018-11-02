@@ -1,4 +1,4 @@
-package api
+package apimodel
 
 import (
 	"github.com/astaxie/beego/validation"

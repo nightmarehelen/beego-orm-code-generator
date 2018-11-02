@@ -1,0 +1,54 @@
+package apisrv
+
+import (
+	"{{.ModelPackage}}"
+	"github.com/astaxie/beego/logs"
+	"github.com/astaxie/beego/orm"
+)
+
+type {{.ModelName}}Service struct{
+	BaseService
+}
+
+func New{{.ModelName}}Srv() *{{.ModelName}}Service{
+	srv := {{.ModelName}}Service{}
+	srv.O = orm.NewOrm()
+	return &srv
+}
+
+func (s *UserService) AddUser(user *SysModel.User) (*SysModel.User,error){
+	user.Password = fmt.Sprintf("%x",md5.Sum([]byte(user.Password)))
+	_, err := s.O.Insert(user)
+	if err != nil{
+		return nil, err
+	}
+	return user, nil
+}
+
+//用于是否存在，用于判断用户名或者
+func (s *UserService) IsExisted(user *SysModel.User) bool{
+
+	qs := s.O.QueryTable(user.TableName())
+
+	//ID不为空
+	if user.Id != 0{
+		qs = qs.Filter("id", user.Id)
+	}
+
+	if user.Username != ""{
+		qs = qs.Filter("username", user.Username)
+	}
+
+	if user.Email != ""{
+		qs = qs.Filter("email", user.Email)
+	}
+
+	cnt, err := qs.Count()
+
+	if err != nil{
+		logs.Error("fail to get user count:"+err.Error())
+		return false
+	}
+
+	return cnt > 0
+}

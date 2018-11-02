@@ -10,7 +10,7 @@ import (
 var Config *config
 type config struct{
 	DB *dbConfig `yaml:DB`
-
+	ModelPackage string `yaml:"model_package"`
 	ModelTemplatePath string `yaml:"model_template_path"`
 	ModelOutputPath string `yaml:"model_output_path"`
 	ServiceTemplatePath string `yaml:"service_template_path"`

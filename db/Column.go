@@ -14,9 +14,6 @@ var TypeDict map[string]string
 var NumTypeDict map[string]string
 
 var StrTypeDict map[string]string
-//全局变量，存储所有列
-type columns map[string][]*Column
-
 
 type Column struct{
 	TableName string
@@ -30,9 +27,18 @@ type Column struct{
 	ColumnType string
 	//原始的数据库注释
 	ColumnComment string `orm:"column(column_comment);type(text)"`
+	ColumnKey string `orm:"column(column_key)"`
 	//格式化解析后的注释，包含的正则校验等内容
 	Comment *Comment
 }
+
+
+type Comment struct{
+	Comment string `json:"comment"`
+	Regex string `json:"regex"`
+	ErrorMsg string `json:"error_msg"`
+}
+
 
 func (c *Column)parseComment(){
 	if c.ColumnComment == ""{
@@ -68,7 +74,7 @@ func initTypeDict(){
 	TypeDict["binary"] = "[]byte"
 	TypeDict["char"] = "string"
 	TypeDict["set"] = "map([]interface,bool)"
-	TypeDict["datetime"] = "time.Time"
+	TypeDict["datetime"] = "*time.Time"
 	TypeDict["json"] = "string"
 	TypeDict["mediumtext"] = "string"
 	TypeDict["longtext"] = "string"
@@ -77,7 +83,7 @@ func initTypeDict(){
 	TypeDict["int"] = "int"
 	TypeDict["bigint"] = "int64"
 	TypeDict["tinyint"] = "int"
-	TypeDict["timestamp"] = "time.Time"
+	TypeDict["timestamp"] = "*time.Time"
 	TypeDict["varchar"] = "string"
 
 	//数字类型
@@ -100,7 +106,6 @@ func initTypeDict(){
 	StrTypeDict["varbinary"] = "[]byte"
 	StrTypeDict["binary"] = "[]byte"
 	StrTypeDict["char"] = "string"
-	StrTypeDict["datetime"] = "time.Time"
 	StrTypeDict["json"] = "string"
 	StrTypeDict["mediumtext"] = "string"
 	StrTypeDict["longtext"] = "string"
@@ -119,7 +124,7 @@ func initColumns(){
 		sql := fmt.Sprintf("select table_name `table_name`,column_name `column_name`,column_default `column_default`," +
 			" is_nullable `is_null`,data_type `data_type`, character_maximum_length `character_maximum_length`," +
 			" numeric_precision `numeric_precision`,numeric_scale `numeric_scale`, " +
-			" column_type `column_type`,column_comment `column_comment`" +
+			" column_type `column_type`,column_comment `column_comment`,column_key `column_key` " +
 			" from information_schema.`COLUMNS` t where t.table_name='%s'", name)
 		fmt.Println(sql)
 		columns := make([]*Column, 0, 0)

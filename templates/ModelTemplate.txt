@@ -1,16 +1,13 @@
 package {{.PackageName}}
 
 import (
-	"time"
 	"github.com/astaxie/beego/validation"
 	"regexp"
 	"github.com/astaxie/beego/orm"
 
 )
 
-
 func init(){
-
 	//注册模型至系统
 	orm.RegisterModel(new({{.ModelName}}))
 
@@ -22,14 +19,12 @@ func init(){
 
 //校验正则声明
 {{range $i,$v := .Table.Columns}}{{if $v.Comment}}{{if $v.Comment.Regex}}//reg{{ToCamelBak $i}}
-var reg{{ToCamelBak $i}} *regexp.Regexp
-{{end}}{{end}}{{end}}
+var reg{{ToCamelBak $i}} *regexp.Regexp{{end}}{{end}}{{end}}
 
 //{{.ModelName}} {{.Table.Comment}}
-type {{.ModelName}} struct{
-    {{range $i,$v := .Table.Columns}}
+type {{.ModelName}} struct{ {{range $i,$v := .Table.Columns}}
     //{{ToCamelBak $i}}  {{$v.ColumnComment}}
-    {{ToCamelBak $i}} {{MySQLType2Go $v.DataType}} `json:"{{ToCamelBak $i}}" orm:"column({{$v.ColumnName}});{{if eq $v.IsNull "YES"}}null;{{end}}"`{{end}}
+    {{ToCamelBak $i}} {{MySQLType2Go $v.DataType}} `json:"{{ToCamelBak $i}}" orm:"column({{$v.ColumnName}});"`{{end}}
 	BaseModel
 }
 
@@ -40,18 +35,12 @@ func (m *{{.ModelName}}) TableName() string {
 	return "{{.Table.Name}}"
 }
 
-
 func (m *{{.ModelName}}) IsValid() (bool, string) {
-
-	/**
+    //正则校验
 	valid := validation.Validation{}
-
-	valid.Match(user.Username, regUsername, "username").Message("请输入正确的用户名,4到16位（字母，数字，下划线，减号）")
-
-	valid.Match(user.Password, regPassword, "password").Message("请输入正确的用户名,4到16位（字母，数字，下划线，减号）")
-
-	valid.Email(user.Email, "email").Message("邮箱地址有误")
-
-	return user.SprintfValidation(&valid)*/
-	return false, ""
+    {{range $i,$v := .Table.Columns}}{{if $v.Comment}}{{if $v.Comment.Regex}}//reg{{ToCamelBak $i}}
+    var reg{{ToCamelBak $i}} *regexp.Regexp
+    valid.Match(m.{{ToCamelBak $i}}, reg{{ToCamelBak $i}}, "{{ToCamelBak $i}}").Message("{{$v.Comment.ErrorMsg}}")
+    {{end}}{{end}}{{end}}
+	return m.SprintfValidation(&valid)
 }

@@ -1,16 +1,13 @@
-package api
+package apimodel
 
 import (
-	"time"
 	"github.com/astaxie/beego/validation"
 	"regexp"
 	"github.com/astaxie/beego/orm"
 
 )
 
-
 func init(){
-
 	//注册模型至系统
 	orm.RegisterModel(new(Monitor))
 
@@ -24,12 +21,10 @@ func init(){
 //regName
 var regName *regexp.Regexp
 
-
 //Monitor 监控设备信息
-type Monitor struct{
-    
+type Monitor struct{ 
     //Description  
-    Description string `json:"Description" orm:"column(description);null;"`
+    Description string `json:"Description" orm:"column(description);"`
     //Id  
     Id int `json:"Id" orm:"column(id);"`
     //Name  {    "comment":"我是注释",    "regex":"[0-9a-zA-Z]{4,6}",    "error_msg":"请输入4-6位大小写字母及数字"}
@@ -39,11 +34,11 @@ type Monitor struct{
     //Type  
     Type int `json:"Type" orm:"column(type);"`
     //X  
-    X float64 `json:"X" orm:"column(x);null;"`
+    X float64 `json:"X" orm:"column(x);"`
     //Y  
-    Y float64 `json:"Y" orm:"column(y);null;"`
+    Y float64 `json:"Y" orm:"column(y);"`
     //Z  
-    Z float64 `json:"Z" orm:"column(z);null;"`
+    Z float64 `json:"Z" orm:"column(z);"`
 	BaseModel
 }
 
@@ -54,18 +49,12 @@ func (m *Monitor) TableName() string {
 	return "ors_cg_monitor"
 }
 
-
 func (m *Monitor) IsValid() (bool, string) {
-
-	/**
+    //正则校验
 	valid := validation.Validation{}
-
-	valid.Match(user.Username, regUsername, "username").Message("请输入正确的用户名,4到16位（字母，数字，下划线，减号）")
-
-	valid.Match(user.Password, regPassword, "password").Message("请输入正确的用户名,4到16位（字母，数字，下划线，减号）")
-
-	valid.Email(user.Email, "email").Message("邮箱地址有误")
-
-	return user.SprintfValidation(&valid)*/
-	return false, ""
+    //regName
+    var regName *regexp.Regexp
+    valid.Match(m.Name, regName, "Name").Message("请输入4-6位大小写字母及数字")
+    
+	return m.SprintfValidation(&valid)
 }
