@@ -15,45 +15,35 @@ func init(){
 	orm.RegisterModel(new({{.ModelName}}))
 
 	//正则编译
-	regUsername = regexp.MustCompile(`^[a-zA-Z0-9_-]{4,16}$`)
-
-	regPassword = regexp.MustCompile(`^[a-zA-Z0-9_-]{4,16}$`)
+	{{range $i,$v := .Table.Columns}}{{if $v.Comment}}{{if $v.Comment.Regex}}//reg{{ToCamelBak $i}}
+    reg{{ToCamelBak $i}} = regexp.MustCompile(`{{$v.Comment.Regex}}`)
+    {{end}}{{end}}{{end}}
 }
 
-var regUsername  *regexp.Regexp
-var regPassword  *regexp.Regexp
-var regEmail  *regexp.Regexp
-
+//校验正则声明
+{{range $i,$v := .Table.Columns}}{{if $v.Comment}}{{if $v.Comment.Regex}}//reg{{ToCamelBak $i}}
+var reg{{ToCamelBak $i}} *regexp.Regexp
+{{end}}{{end}}{{end}}
 
 //{{.ModelName}} {{.Table.Comment}}
 type {{.ModelName}} struct{
-	Id int  `json:"Id,omitempty" orm:"auto;size(11);column(Id);pk;"`
-	Username string `json:"Username,omitempty" orm:"size(20);column(username);unique;"`
-	Password string `json:"Password,omitempty" orm:"size(32);column(password);unique;"`
-	Email string `json:"Email,omitempty" orm:"size(32);column(email);unique;"`
-	LastLogin time.Time `orm:"column(last_login);null;type(datetime)"`
-	Created time.Time `orm:"column(created);auto_now_add;type(datetime)"`
-	Updated time.Time `orm:"column(updated);null;type(datetime);auto_now"`
-
     {{range $i,$v := .Table.Columns}}
-        {{ToCamelBak $i}}
-        {{$v}}
-
-    {{end}}
-
+    //{{ToCamelBak $i}}  {{$v.ColumnComment}}
+    {{ToCamelBak $i}} {{MySQLType2Go $v.DataType}} `json:"{{ToCamelBak $i}}" orm:"column({{$v.ColumnName}});{{if eq $v.IsNull "YES"}}null;{{end}}"`{{end}}
 	BaseModel
 }
 
 /**
 系统根据该函数映射实体和数据库表的关系
  */
-func (user *User) TableName() string {
-	return user.TableNameImpl("user")
+func (m *{{.ModelName}}) TableName() string {
+	return "{{.Table.Name}}"
 }
 
 
-func (user *User) IsValid() (bool, string) {
+func (m *{{.ModelName}}) IsValid() (bool, string) {
 
+	/**
 	valid := validation.Validation{}
 
 	valid.Match(user.Username, regUsername, "username").Message("请输入正确的用户名,4到16位（字母，数字，下划线，减号）")
@@ -62,5 +52,6 @@ func (user *User) IsValid() (bool, string) {
 
 	valid.Email(user.Email, "email").Message("邮箱地址有误")
 
-	return user.SprintfValidation(&valid)
+	return user.SprintfValidation(&valid)*/
+	return false, ""
 }

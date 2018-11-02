@@ -3,9 +3,9 @@ package db
 import (
 	"fmt"
 	"github.com/astaxie/beego/orm"
-	"os"
 	"codegen/util"
 	"encoding/json"
+	"strings"
 )
 
 //类型转换字典
@@ -29,7 +29,7 @@ type Column struct{
 	NumericScale int
 	ColumnType string
 	//原始的数据库注释
-	ColumnComment string
+	ColumnComment string `orm:"column(column_comment);type(text)"`
 	//格式化解析后的注释，包含的正则校验等内容
 	Comment *Comment
 }
@@ -38,6 +38,9 @@ func (c *Column)parseComment(){
 	if c.ColumnComment == ""{
 		return
 	}
+
+	c.ColumnComment = strings.Replace(c.ColumnComment, "\r", "", -1)
+	c.ColumnComment = strings.Replace(c.ColumnComment, "\n", "", -1)
 	cmt := Comment{}
 	err := json.Unmarshal([]byte(c.ColumnComment), &cmt)
 	if err != nil{
@@ -53,7 +56,7 @@ func initTypeDict(){
 	//mysql数据类型到go的类型映射
 	TypeDict["varchar"] = "string"
 	TypeDict["date"] = "time.Time"
-	TypeDict["float"] = "float"
+	TypeDict["float"] = "float32"
 	TypeDict["time"] = "time.Time"
 	TypeDict["mediumblob"] = "[]byte"
 	TypeDict["smallint"] = "int"
@@ -73,18 +76,20 @@ func initTypeDict(){
 	TypeDict["enum"] = "string"
 	TypeDict["int"] = "int"
 	TypeDict["bigint"] = "int64"
+	TypeDict["tinyint"] = "int"
 	TypeDict["timestamp"] = "time.Time"
 	TypeDict["varchar"] = "string"
 
 	//数字类型
 	NumTypeDict = make(map[string]string)
-	NumTypeDict["float"] = "float"
+	NumTypeDict["float"] = "float32"
 	NumTypeDict["smallint"] = "int"
 	NumTypeDict["longblob"] = "[]byte"
 	NumTypeDict["double"] = "float64"
 	NumTypeDict["decimal"] = "float64"
 	NumTypeDict["int"] = "int"
 	NumTypeDict["bigint"] = "int64"
+	NumTypeDict["tinyint"] = "int"
 
 	//字符类型，需要设置长度的，可能需要校验长度
 	StrTypeDict = make(map[string]string)
@@ -117,19 +122,30 @@ func initColumns(){
 			" column_type `column_type`,column_comment `column_comment`" +
 			" from information_schema.`COLUMNS` t where t.table_name='%s'", name)
 		fmt.Println(sql)
-		var columns []Column
+		columns := make([]*Column, 0, 0)
 		num,err := o.Raw(sql).QueryRows(&columns)
 		if err != nil{
-			println(err.Error())
-			os.Exit(-1)
+			panic(err.Error())
 		}
+
 		fmt.Printf("load %d columns for table %s\n", num, name)
 
 		for _,column := range columns{
 			column.parseComment()
-			table.Columns[column.ColumnName] = &column
+			column.TableName = name
+			table.Columns[column.ColumnName] = column
 		}
 
 		fmt.Println(util.IndentJSON(table))
 	}
+}
+
+
+func MySQLType2Go(mysql string) string{
+	t, ok := TypeDict[mysql]
+	if !ok{
+
+		panic(fmt.Errorf("unsurpporte type of mysql to map to go :%s", mysql))
+	}
+	return  t
 }

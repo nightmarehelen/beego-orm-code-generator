@@ -7,14 +7,14 @@ import (
 	"codegen/config"
 	"codegen/util"
 	"io/ioutil"
-	"html/template"
+	"text/template"
 	"os"
 )
 
 //生成模型文件
 func GenerateModels(){
 	//获取解析模板
-	getTemplateParser(config.Config.ModelTemplatePath)
+	t := getTemplateParser(config.Config.ModelTemplatePath)
 
 	for tableName,table := range db.Tables {
 
@@ -27,8 +27,6 @@ func GenerateModels(){
 		if !found {
 			continue
 		}
-
-		fmt.Printf("generate model for table %s\n", tableName)
 
 		//去掉表前缀，改成驼峰形式，并且文件名加上Model
 		modelName := util.ToCamelBak(strings.Replace(tableName, config.Config.DB.TablePrefix, "", -1))
@@ -46,6 +44,8 @@ func GenerateModels(){
 		model.PackageName = getPackageName(config.Config.ModelOutputPath)
 		model.ModelName = modelName
 		model.Table = table
+
+		fmt.Printf("generate model for table %s, contents: %s\n", model.Table.Name, util.IndentJSON(model.Table))
 		t.Execute(file, model)
 	}
 }
@@ -83,6 +83,7 @@ func getFuncMap() map[string]interface{}{
 	//驼峰格式转换
 	funcMap["ToCamelBak"] = util.ToCamelBak
 
+	funcMap["MySQLType2Go"] = db.MySQLType2Go
 
 	return funcMap
 }
